@@ -1,119 +1,147 @@
 
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Home, BookOpen, MessageCircle, User, Menu, X, Sparkles } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { BookOpen, Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
   const navItems = [
-    { name: "Dashboard", href: "/", icon: Home },
-    { name: "Courses", href: "/courses", icon: BookOpen },
-    { name: "AI Tutor", href: "/ai-tutor", icon: MessageCircle },
-    { name: "Profile", href: "/profile", icon: User }
+    { name: "Dashboard", path: "/" },
+    { name: "Courses", path: "/courses" },
+    { name: "AI Tutor", path: "/ai-tutor" },
+    { name: "Profile", path: "/profile" },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <nav className="bg-white/10 backdrop-blur-md border-b border-white/20 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between items-center py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 text-white font-bold text-xl">
-            <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
-              <Sparkles className="h-6 w-6" />
-            </div>
-            <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              EduSpark
-            </span>
-          </Link>
+          <div className="flex items-center space-x-2">
+            <BookOpen className="h-8 w-8 text-white" />
+            <Link to="/" className="text-xl font-bold text-white">
+              EduPath
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
+          <div className="hidden md:block">
+            <div className="ml-10 flex items-baseline space-x-4">
+              {user && navItems.map((item) => (
                 <Link
                   key={item.name}
-                  to={item.href}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    isActive(item.href)
-                      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
-                      : "text-blue-200 hover:text-white hover:bg-white/10"
+                  to={item.path}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive(item.path)
+                      ? "bg-white/20 text-white"
+                      : "text-blue-200 hover:bg-white/10 hover:text-white"
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                  {item.name === "AI Tutor" && (
-                    <Badge className="bg-green-500 text-xs">New</Badge>
-                  )}
+                  {item.name}
                 </Link>
-              );
-            })}
-          </div>
-
-          {/* User Actions */}
-          <div className="hidden md:flex items-center gap-3">
-            <div className="text-white text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span>Level 8 • 2,450 XP</span>
-              </div>
+              ))}
             </div>
-            <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
-              Upgrade
-            </Button>
           </div>
 
-          {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden text-white"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </Button>
+          {/* Auth Actions */}
+          <div className="hidden md:flex items-center space-x-4">
+            {user ? (
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 text-white">
+                  <User className="h-4 w-4" />
+                  <span className="text-sm">{user.email}</span>
+                </div>
+                <Button
+                  onClick={handleSignOut}
+                  variant="outline"
+                  size="sm"
+                  className="border-white/30 text-white hover:bg-white/10"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Link to="/auth">
+                <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
+                  Sign In
+                </Button>
+              </Link>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-white hover:text-blue-200 focus:outline-none"
+            >
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {isOpen && (
-          <div className="md:hidden pb-4 space-y-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
+        {/* Mobile menu */}
+        {isMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              {user && navItems.map((item) => (
                 <Link
                   key={item.name}
-                  to={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    isActive(item.href)
-                      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
-                      : "text-blue-200 hover:text-white hover:bg-white/10"
+                  to={item.path}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    isActive(item.path)
+                      ? "bg-white/20 text-white"
+                      : "text-blue-200 hover:bg-white/10 hover:text-white"
                   }`}
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => setIsMenuOpen(false)}
                 >
-                  <Icon className="h-5 w-5" />
-                  <span>{item.name}</span>
-                  {item.name === "AI Tutor" && (
-                    <Badge className="bg-green-500 text-xs ml-auto">New</Badge>
-                  )}
+                  {item.name}
                 </Link>
-              );
-            })}
-            <div className="border-t border-white/20 pt-4 mt-4">
-              <div className="text-white text-sm px-4 mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span>Level 8 • 2,450 XP</span>
+              ))}
+              
+              {user ? (
+                <div className="border-t border-white/20 pt-3 mt-3">
+                  <div className="flex items-center px-3 py-2 text-white">
+                    <User className="h-4 w-4 mr-2" />
+                    <span className="text-sm">{user.email}</span>
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full text-left px-3 py-2 text-blue-200 hover:bg-white/10 hover:text-white flex items-center"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </button>
                 </div>
-              </div>
-              <Button className="w-full mx-4 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
-                Upgrade
-              </Button>
+              ) : (
+                <div className="border-t border-white/20 pt-3 mt-3">
+                  <Link
+                    to="/auth"
+                    className="block px-3 py-2 text-blue-200 hover:bg-white/10 hover:text-white"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}
